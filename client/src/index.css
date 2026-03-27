@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply antialiased  bg-gray-50;
+  }
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.donation-popup .leaflet-popup-content-wrapper {
+  @apply rounded-xl border-2 border-gray-900 shadow-xl overflow-hidden p-0;
+}
+
+.donation-popup .leaflet-popup-content {
+  @apply m-0 p-4;
+}
+
+.donation-popup .leaflet-popup-tip {
+  @apply border-2 border-gray-900 border-t-0 border-l-0;
+}

@@ -1,0 +1,13 @@
+{
+  "name": "foodconnect",
+  "version": "1.0.0",
+  "description": "FoodConnect Bharat - End hunger",
+  "scripts": {
+    "start": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && npm start || node index.js",
+    "client": "cd client && npm run dev"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
