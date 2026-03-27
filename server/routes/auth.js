@@ -79,4 +79,41 @@ router.post('/login', async (req, res) => {
   }
 });
 
+
+// GET all NGOs
+router.get('/ngos', async (req, res) => {
+  try {
+    const ngos = await User.find({ role: 'ngo' }).select('name phone _id');
+    res.json(ngos);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch NGOs' });
+  }
+});
+
+// ── Demo account seeder ────────────────────────────────
+const DEMO_USERS = [
+  { name: 'Demo Donor', phone: '9000000001', password: 'demo123', role: 'donor', dietaryPref: 'any', allergyProfile: [] },
+  { name: 'Demo Needer', phone: '9000000002', password: 'demo123', role: 'needer', dietaryPref: 'veg', allergyProfile: ['peanuts', 'milk'] },
+  { name: 'Demo NGO', phone: '9000000003', password: 'demo123', role: 'ngo', dietaryPref: 'any', allergyProfile: [] },
+  { name: 'Demo Volunteer', phone: '9000000004', password: 'demo123', role: 'volunteer', dietaryPref: 'any', allergyProfile: [] },
+];
+
+router.post('/seed-demo', async (_req, res) => {
+  try {
+    const created = [];
+    for (const u of DEMO_USERS) {
+      const exists = await User.findOne({ phone: u.phone });
+      if (!exists) {
+        const hashed = await bcrypt.hash(u.password, 10);
+        await new User({ ...u, password: hashed }).save();
+        created.push(u.name);
+      }
+    }
+    res.json({ message: created.length ? `Seeded: ${created.join(', ')}` : 'Demo accounts already exist' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 export default router;
+

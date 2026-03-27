@@ -1,27 +1,100 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  * { box-sizing: border-box; }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
-    @apply antialiased  bg-gray-50;
+    @apply antialiased bg-[#f8fafc] text-slate-800;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
   }
 }
 
-.leaflet-container {
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-}
+/* ── Leaflet Map ─────────────────────────────── */
+.leaflet-container { width: 100%; height: 100%; z-index: 0; }
 
 .donation-popup .leaflet-popup-content-wrapper {
-  @apply rounded-xl border-2 border-gray-900 shadow-xl overflow-hidden p-0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0,0,0,0.05);
+  border-radius: 16px;
+  box-shadow: 0 20px 40px -10px rgba(0,0,0,0.15);
+  color: #1e293b;
+  overflow: hidden;
+  padding: 0;
+}
+.donation-popup .leaflet-popup-content { margin: 0; padding: 16px; }
+.donation-popup .leaflet-popup-tip-container { display: none; }
+.leaflet-popup-close-button { color: #64748b !important; top: 8px !important; right: 8px !important; }
+
+/* ── Custom Scrollbar ────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* ── Glassmorphism Card (Light) ──────────────────────── */
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,1);
 }
 
-.donation-popup .leaflet-popup-content {
-  @apply m-0 p-4;
+/* ── Animated Gradient Button ────────────────── */
+.btn-primary {
+  background: linear-gradient(135deg, #f97316, #ef4444);
+  box-shadow: 0 4px 15px rgba(249,115,22,0.3);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-primary:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(249,115,22,0.4);
+}
+.btn-primary:active {
+  transform: translateY(0) scale(0.98);
 }
 
-.donation-popup .leaflet-popup-tip {
-  @apply border-2 border-gray-900 border-t-0 border-l-0;
+/* ── Pulse ring on live location ─────────────── */
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(2.2); opacity: 0; }
 }
+.live-location-ring {
+  animation: pulse-ring 1.5s ease-out infinite;
+}
+
+/* ── Floating label inputs (Light) ───────────────────── */
+.form-input {
+  @apply w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-800 
+         placeholder-slate-400 focus:outline-none focus:border-orange-500 focus:ring-4 
+         focus:ring-orange-500/10 transition-all shadow-sm;
+}
+
+/* ── Tag chips ───────────────────────────────── */
+.tag-chip {
+  @apply inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold 
+         bg-slate-100 text-slate-600 border border-slate-200 shadow-sm transition-colors;
+}
+.tag-chip:hover {
+  @apply bg-slate-200 text-slate-800;
+}
+
+/* ── Urgency badge animations ─────────────────── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.badge-critical { animation: blink 1.2s ease infinite; }

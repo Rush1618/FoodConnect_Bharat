@@ -47,11 +47,14 @@ Every pin is tagged Veg / Jain / Non-veg. Every request is matched by dietary co
 | Feature | Description |
 |--------|-------------|
 | 🗺️ Live Map | Real-time food pins using Leaflet.js — color coded by dietary type |
-| 👤 Role Selection | Donor / Needer / Volunteer — switch anytime |
-| 🥗 Dietary Filter | Veg · Jain · Non-veg — smart matching (Jain users only see Jain food) |
-| 🍛 Bhandara Mode | Special flow for free food events with crowd estimate + time window |
-| 📋 Donation Form | Food type, quantity, location, expiry time, allergen flag |
-| 🤝 Volunteer Tasks | Accept task → get directions → mark complete |
+| 🛡️ Dietary Privacy | Users only see food that matches their specific dietary profile (Veg/Jain/Non-veg) |
+| 🍛 Bhandara Mode | Special live-broadcast mode for free food events with crowd tracking |
+| 📋 Donation Logic | Multi-step donation with AI-powered expiry countdown and urgency scoring |
+| 🤝 Community Feed | Centralized page for volunteers/donors to see active food needs nearby |
+| 📍 Live Tracking | Neediest persons can see the EXACT pickup location of food once approved |
+| 🏆 Karma Social | Public leaderboard to recognize top community contributors |
+| 🆘 Anonymous SOS | One-tap emergency broadcast for those in critical need of food |
+| 📲 WhatsApp Viral | Instant share buttons to spread bhandara details across local groups |
 
 ### Unique Differentiators (Judge Magnets)
 

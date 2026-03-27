@@ -15,10 +15,12 @@ const requestSchema = new Schema(
     allergyNotes: { type: String, default: '' },
     status: { 
       type: String, 
-      enum: ['pending', 'matched', 'fulfilled'],
+      enum: ['pending', 'approved_for_pickup', 'approved_for_delivery', 'assigned_to_volunteer', 'completed'],
       default: 'pending'
     },
     matchedDonationId: { type: Schema.Types.ObjectId, ref: 'Donation', default: null },
+    linkedDonation: { type: Schema.Types.ObjectId, ref: 'Donation', default: null },
+    deliveryMethod: { type: String, enum: ['pickup', 'delivery'], default: 'pickup' },
     location: {
       lat: { type: Number, required: true },
       lng: { type: Number, required: true }

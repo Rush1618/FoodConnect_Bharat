@@ -1,35 +1,37 @@
 import React from 'react';
+import { Trophy, Star, Gem } from 'lucide-react';
 
-const DUMMY_LEADERBOARD = [
-  { rank: 1, name: "Suresh P.", meals: 450, badge: "🏆" },
-  { rank: 2, name: "Khalsa NGO", meals: 320, badge: "⭐" },
-  { rank: 3, name: "Anita D.", meals: 215, badge: "💎" },
+const HEROES = [
+  { rank: 1, name: 'Suresh P.', meals: 450, icon: Trophy, color: 'text-yellow-600', bg: 'bg-yellow-50' },
+  { rank: 2, name: 'Khalsa NGO', meals: 320, icon: Star, color: 'text-slate-500', bg: 'bg-slate-100' },
+  { rank: 3, name: 'Anita D.', meals: 215, icon: Gem, color: 'text-cyan-600', bg: 'bg-cyan-50' },
 ];
 
 export default function Leaderboard() {
   return (
-    <div className="bg-white/95 p-4 flex flex-col h-full border">
-      <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-4 pb-2 border-b">Top Karma Heroes</h3>
-      <div className="space-y-4">
-        {DUMMY_LEADERBOARD.map((hero, i) => (
-          <div key={i} className="flex items-center justify-between">
-             <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${i === 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'}`}>
-                  #{hero.rank}
-                </div>
-                <div>
-                  <p className="font-bold text-sm text-gray-800">{hero.name} {hero.badge}</p>
-                </div>
-             </div>
-             <div className="text-right">
-                <span className="block font-black text-blue-600">{hero.meals}</span>
-                <span className="block text-[10px] text-gray-400 uppercase tracking-wide">Meals Saved</span>
-             </div>
+    <div className="p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <Trophy size={16} className="text-yellow-400" />
+        <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500">Karma Heroes</h3>
+      </div>
+      <div className="space-y-3">
+        {HEROES.map(({ rank, name, meals, icon: Icon, color, bg }) => (
+          <div key={rank} className={`flex items-center gap-3 p-3 rounded-xl ${bg}`}>
+            <div className={`w-8 h-8 rounded-xl ${bg} flex items-center justify-center`}>
+              <Icon size={16} className={color} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-slate-800 truncate">{name}</p>
+              <p className="text-xs text-slate-500">{meals} meals saved</p>
+            </div>
+            <span className={`text-lg font-black ${color}`}>#{rank}</span>
           </div>
         ))}
       </div>
-      <div className="mt-4 pt-3 border-t text-center">
-         <span className="text-xs text-blue-500 font-semibold cursor-pointer hover:underline">View full ranking</span>
+      <div className="mt-4 pt-3 border-t border-slate-200 text-center">
+        <span className="text-xs text-orange-600 font-semibold cursor-pointer hover:text-orange-500 transition">
+          See full ranking →
+        </span>
       </div>
     </div>
   );

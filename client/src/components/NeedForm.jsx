@@ -1,129 +1,197 @@
 import React, { useState, useEffect } from 'react';
 import AllergenPicker from './AllergenPicker';
 import { useAuth } from '../context/AuthContext';
+import { Users, Shield, ShieldAlert, CheckCircle, MapPin, Navigation } from 'lucide-react';
 
-export default function NeedForm({ onClose }) {
+const DIET_OPTS = [
+  { value: 'any', label: '🍽️ Any' },
+  { value: 'veg', label: '🌿 Vegetarian' },
+  { value: 'jain', label: '🟡 Jain' },
+  { value: 'nonveg', label: '🍗 Non-Veg' },
+];
+
+export default function NeedForm({ isSOS = false, onClose }) {
   const { user, token } = useAuth();
-  
   const [dietaryPref, setDietaryPref] = useState('any');
   const [numberOfPeople, setNumberOfPeople] = useState(1);
   const [isAnonymous, setIsAnonymous] = useState(false);
-  const [isSOS, setIsSOS] = useState(false);
-  
-  // Allergen system
   const [allergiesToAvoid, setAllergiesToAvoid] = useState([]);
   const [allergyNotes, setAllergyNotes] = useState('');
   const [saveProfile, setSaveProfile] = useState(true);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [address, setAddress] = useState('');
 
   useEffect(() => {
-    if (user && user.allergyProfile && user.allergyProfile.length > 0) {
+    if (user?.allergyProfile?.length) {
       setAllergiesToAvoid(user.allergyProfile);
       setProfileLoaded(true);
     }
   }, [user]);
 
+  const handleAutoLocate = () => {
+    setLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+          const data = await res.json();
+          setAddress(data.display_name || `Near ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+        } catch {
+          setAddress(`Location: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+        }
+        setLoading(false);
+      },
+      () => {
+        alert('Location access denied');
+        setLoading(false);
+      }
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    const location = { lat: 18.5204 + Math.random()*0.1, lng: 73.8567 + Math.random()*0.1 };
-    
+    setLoading(true);
+    const location = { 
+      address,
+      lat: user?.location?.lat || 19.213768 + (Math.random() - 0.5) * 0.02, 
+      lng: user?.location?.lng || 72.865273 + (Math.random() - 0.5) * 0.02 
+    };
     try {
       const headers = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      // 1. Submit the request
-      const response = await fetch('http://localhost:5000/api/requests', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          dietaryPref,
-          numberOfPeople,
-          isAnonymous,
-          isSOS,
-          allergiesToAvoid,
-          allergyNotes,
-          location
-        })
+      const res = await fetch('http://localhost:5000/api/requests', {
+        method: 'POST', headers,
+        body: JSON.stringify({ dietaryPref, numberOfPeople, isAnonymous, isSOS, allergiesToAvoid, allergyNotes, location }),
       });
-
-      if (!response.ok) throw new Error('Failed to create request');
-
-      // 2. Update user profile if checked
+      if (!res.ok) throw new Error('Failed to create request');
       if (user && saveProfile) {
         await fetch('http://localhost:5000/api/users/allergy-profile', {
-          method: 'PATCH',
-          headers,
-          body: JSON.stringify({ allergyProfile: allergiesToAvoid, allergyNotes })
+          method: 'PATCH', headers,
+          body: JSON.stringify({ allergyProfile: allergiesToAvoid, allergyNotes }),
         });
       }
-
-      alert('Request sent to volunteers in area!');
-      if (onClose) onClose();
-
-    } catch (err) {
-      console.error(err);
-      alert(err.message);
-    }
+      setSuccess(true);
+    } catch (err) { alert(err.message); }
+    setLoading(false);
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl shadow border space-y-6 text-gray-800">
-      <h2 className="text-2xl font-bold">{isSOS ? '🚨 SOS Emergency Request' : 'Find Food'}</h2>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label className="font-semibold block">Dietary Preference</label>
-          <select value={dietaryPref} onChange={e => setDietaryPref(e.target.value)} className="w-full border p-2 rounded-lg">
-            <option value="any">Any (Don't mind)</option>
-            <option value="veg">Vegetarian</option>
-            <option value="jain">Jain</option>
-            <option value="nonveg">Non-Vegetarian</option>
-          </select>
+  if (success) {
+    return (
+      <div className="text-center py-8 space-y-4">
+        <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto">
+          <CheckCircle size={32} className="text-green-400" />
         </div>
-        <div className="space-y-2">
-          <label className="font-semibold block">For how many people?</label>
-          <input required type="number" min="1" value={numberOfPeople} onChange={e => setNumberOfPeople(e.target.value)} className="w-full border p-2 rounded-lg" />
+        <h3 className="text-xl font-extrabold text-slate-900" style={{ fontFamily: 'Plus Jakarta Sans' }}>
+          {isSOS ? '🚨 SOS Broadcast Sent!' : 'Request Submitted!'}
+        </h3>
+        <p className="text-slate-500 text-sm">Volunteers in your area have been notified.</p>
+        {onClose && (
+          <button onClick={onClose} className="btn-primary px-6 py-2.5 rounded-xl text-white font-bold text-sm">
+            Close
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {!isSOS && (
+        <div>
+          <h2 className="text-2xl font-extrabold text-slate-900" style={{ fontFamily: 'Plus Jakarta Sans' }}>Find Food Near You</h2>
+          <p className="text-slate-500 text-sm mt-1">Tell us your needs and we'll match the right food.</p>
+        </div>
+      )}
+
+      {isSOS && (
+        <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-semibold">
+          <ShieldAlert size={15} /> Emergency mode — your request will be broadcast immediately
+        </div>
+      )}
+
+      {/* Dietary preference */}
+      <div>
+        <label className="text-sm font-semibold text-slate-700 mb-2 block">Dietary Preference</label>
+        <div className="grid grid-cols-2 gap-2">
+          {DIET_OPTS.map(o => (
+            <button type="button" key={o.value} onClick={() => setDietaryPref(o.value)}
+              className={`py-2 px-3 rounded-xl border text-sm font-bold transition-all ${dietaryPref === o.value ? 'bg-orange-50 border-orange-200 text-orange-600 shadow-sm' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'}`}>
+              {o.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="space-y-4 border-t pt-4">
-        <h3 className="text-lg font-bold">Your Dietary Restrictions</h3>
-        
+      {/* Number of people */}
+      <div>
+        <label className="text-sm font-semibold text-slate-700 mb-2 block flex items-center gap-1.5">
+          <Users size={13} /> For how many people?
+        </label>
+        <input required type="number" min="1" value={numberOfPeople}
+          onChange={e => setNumberOfPeople(e.target.value)} className="form-input" />
+      </div>
+
+      {/* Allergens */}
+      <div className="border-t border-slate-200 pt-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Shield size={14} className="text-orange-500" />
+          <h3 className="text-sm font-bold text-slate-800">Your Dietary Restrictions</h3>
+        </div>
+
         {profileLoaded && (
-          <div className="bg-blue-50 text-blue-800 border-l-4 border-blue-500 p-3 rounded-r-lg text-sm mt-2">
-            💡 We loaded your saved allergy profile. You can change it for this request below.
+          <div className="px-3 py-2 rounded-xl bg-blue-50 border border-blue-100 text-blue-700 text-xs shadow-sm">
+            💡 Loaded your saved allergy profile. You can change it for this request below.
           </div>
         )}
 
-        <div className="space-y-2">
-          <label className="font-semibold block">Any allergies or things you want to avoid?</label>
-          <p className="text-xs text-gray-500">We will only show you food that does not contain these.</p>
-          <AllergenPicker mode="needer" selected={allergiesToAvoid} onChange={setAllergiesToAvoid} />
-        </div>
-        
-        <div className="space-y-2">
-          <label className="font-semibold block text-sm">Anything else? (optional)</label>
-          <input type="text" placeholder="e.g. I can't eat very spicy food" value={allergyNotes} onChange={e => setAllergyNotes(e.target.value)} className="w-full border p-2 rounded-lg text-sm" />
-        </div>
+        <AllergenPicker mode="needer" selected={allergiesToAvoid} onChange={setAllergiesToAvoid} />
+
+        <input type="text" placeholder="Anything else? e.g. Can't eat very spicy food"
+          value={allergyNotes} onChange={e => setAllergyNotes(e.target.value)} className="form-input text-sm" />
 
         {user && (
-          <label className="flex items-center gap-2 text-sm mt-2 cursor-pointer font-medium text-gray-700">
-            <input type="checkbox" checked={saveProfile} onChange={e => setSaveProfile(e.target.checked)} className="w-4 h-4 text-blue-600 rounded" />
-            Remember my allergy profile for next time
+          <label className="flex items-center gap-2 text-sm cursor-pointer text-slate-500 hover:text-slate-800 transition">
+            <input type="checkbox" checked={saveProfile} onChange={e => setSaveProfile(e.target.checked)}
+              className="w-4 h-4 accent-orange-500 rounded" />
+            Save my allergy profile for next time
           </label>
         )}
       </div>
 
-      <div className="space-y-4 border-t pt-4">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" checked={isAnonymous} onChange={e => setIsAnonymous(e.target.checked)} className="w-5 h-5" />
-          Keep my request anonymous
-        </label>
+      {/* Address */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
+            <MapPin size={13} /> Where do you need food?
+          </label>
+          <button type="button" onClick={handleAutoLocate}
+            className="text-[10px] font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1 px-2 py-1 rounded-lg bg-orange-50 hover:bg-orange-100 transition shadow-sm border border-orange-200/50">
+            <Navigation size={10} /> Auto-Locate
+          </button>
+        </div>
+        <textarea
+          required
+          rows="2"
+          placeholder="e.g. Near Star Mall entrance, Bandra West"
+          value={address}
+          onChange={e => setAddress(e.target.value)}
+          className="form-input text-sm resize-none"
+        />
       </div>
 
-      <button type="submit" className={`w-full text-white font-bold py-3 rounded-lg transition ${isSOS ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}`}>
-        {isSOS ? 'Broadcast SOS' : 'Find Matching Food'}
+      {/* Anonymous */}
+      <label className="flex items-center gap-2 text-sm cursor-pointer text-slate-500 hover:text-slate-800 transition border-t border-slate-200 pt-4">
+        <input type="checkbox" checked={isAnonymous} onChange={e => setIsAnonymous(e.target.checked)}
+          className="w-4 h-4 accent-orange-500 rounded" />
+        Keep my request anonymous
+      </label>
+
+      <button type="submit" disabled={loading}
+        className={`w-full py-3.5 rounded-xl text-white font-bold text-sm transition-all disabled:opacity-50 ${isSOS ? 'bg-gradient-to-r from-red-600 to-rose-600 shadow-lg shadow-red-500/20' : 'btn-primary'}`}>
+        {loading ? 'Sending…' : isSOS ? '🚨 Broadcast Emergency SOS' : '🍽️ Find Matching Food'}
       </button>
     </form>
   );
