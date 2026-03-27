@@ -10,7 +10,6 @@ import Leaderboard from './components/Leaderboard';
 import { MapPin, User, Utensils, LogOut, Menu, X, Plus, HeartHandshake, Trophy, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import RequestPage from './components/RequestPage';
-import Hero3D from './components/Hero3D';
 
 // ── Protected route wrapper ────────────────────────────
 function ProtectedRoute({ children, roles }) {
