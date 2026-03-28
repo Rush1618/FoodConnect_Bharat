@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.post('/register', async (req, res) => {
   try {
-    const { name, phone, password, role, dietaryPref, allergyProfile, allergyNotes } = req.body;
+    const { name, phone, password, role, dietaryPref, allergyProfile, allergyNotes, institution, donorType } = req.body;
 
     const existingUser = await User.findOne({ phone });
     if (existingUser) {
@@ -23,7 +23,9 @@ router.post('/register', async (req, res) => {
       role,
       dietaryPref,
       allergyProfile,
-      allergyNotes
+      allergyNotes,
+      institution,
+      donorType
     });
 
     await newUser.save();

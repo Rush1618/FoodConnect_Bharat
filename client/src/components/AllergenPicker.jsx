@@ -3,7 +3,7 @@ import { ALLERGEN_LIST } from '../constants/allergens';
 import { Search, ChevronDown, ChevronRight, Check } from 'lucide-react';
 import clsx from 'clsx';
 
-const BIG_8 = ['peanuts', 'milk', 'eggs', 'wheat', 'fish', 'soybean', 'sesame', 'mustard'];
+const BIG_8 = ['peanuts', 'milk', 'eggs', 'wheat', 'fish', 'soybean', 'sesame', 'mustard_seed'];
 
 export default function AllergenPicker({ mode, selected, onChange }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -18,8 +18,13 @@ export default function AllergenPicker({ mode, selected, onChange }) {
     setExpandedCats(prev => ({ ...prev, [cat]: !prev[cat] }));
   };
 
-  const selectBig8 = () => {
-    onChange([...new Set([...selected, ...BIG_8])]);
+  const toggleBig8 = () => {
+    const allBig8Selected = BIG_8.every(id => selected.includes(id));
+    if (allBig8Selected) {
+      onChange(selected.filter(id => !BIG_8.includes(id)));
+    } else {
+      onChange([...new Set([...selected, ...BIG_8])]);
+    }
   };
 
   const categories = useMemo(() => {
@@ -34,8 +39,12 @@ export default function AllergenPicker({ mode, selected, onChange }) {
     }, {});
   }, [searchTerm]);
 
-  const activeColor = isDonor ? 'border-orange-200 bg-orange-50 text-orange-600' : 'border-red-200 bg-red-50 text-red-600';
-  const countColor = isDonor ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700';
+  // Pill states: unchecked=grey border | donor-checked=amber #EF9F27 | needer-checked=red #E24B4A
+  const getPillStyles = (isSelected) => {
+    if (!isSelected) return 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50';
+    if (isDonor) return 'border-[#EF9F27] bg-[#EF9F27]/10 text-[#EF9F27] font-bold';
+    return 'border-[#E24B4A] bg-[#E24B4A] text-white font-bold';
+  };
 
   return (
     <div className="w-full bg-white border border-slate-200 rounded-2xl overflow-hidden text-sm shadow-sm">
@@ -49,10 +58,10 @@ export default function AllergenPicker({ mode, selected, onChange }) {
             className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition"
           />
         </div>
-        <button type="button" onClick={selectBig8}
+        <button type="button" onClick={toggleBig8}
           className="flex items-center gap-2 text-xs font-bold text-orange-600 hover:text-orange-500 transition">
           <span className="bg-orange-100 text-orange-700 font-bold px-2 py-0.5 rounded-full">8</span>
-          Quick-select common allergens (Big-8)
+          Quick-select "Big 8" allergens (toggle)
         </button>
       </div>
 
@@ -70,11 +79,11 @@ export default function AllergenPicker({ mode, selected, onChange }) {
               >
                 <div className="flex items-center gap-2 font-semibold text-xs uppercase tracking-wider">
                   {isExpanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
-                  {category}
+                  {category} ({selectedCount})
                 </div>
                 {selectedCount > 0 && (
-                  <span className={clsx('px-2 py-0.5 rounded-full text-xs font-bold', countColor)}>
-                    {selectedCount} ✓
+                  <span className={clsx('px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700')}>
+                    {selectedCount} selected
                   </span>
                 )}
               </button>
@@ -86,11 +95,14 @@ export default function AllergenPicker({ mode, selected, onChange }) {
                     return (
                       <button key={item.id} type="button" onClick={() => toggleAllergen(item.id)}
                         className={clsx(
-                          'flex items-center gap-1 px-2.5 py-1 rounded-full border text-xs font-medium transition-all',
-                          isSelected ? activeColor : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800'
+                          'group relative flex items-center gap-1.5 px-3 py-1.5 rounded-2xl border text-[11px] font-bold transition-all active:scale-95',
+                          getPillStyles(isSelected)
                         )}>
-                        {isSelected && <Check size={11} />}
+                        {isSelected && <Check size={11} className="animate-in fade-in zoom-in duration-300" />}
                         {item.label}
+                        {BIG_8.includes(item.id) && (
+                          <span className="absolute -top-1.5 -right-1 px-1 bg-rose-500 text-white text-[7px] font-black rounded-full border border-white shadow-sm scale-90">8</span>
+                        )}
                       </button>
                     );
                   })}
@@ -99,16 +111,13 @@ export default function AllergenPicker({ mode, selected, onChange }) {
             </div>
           );
         })}
-        {Object.keys(categories).length === 0 && (
-          <div className="text-slate-500 text-center py-8 text-sm">No ingredients found</div>
-        )}
       </div>
 
       {/* Footer summary */}
       <div className="px-4 py-2.5 border-t border-slate-200 text-xs text-slate-500 text-center font-medium bg-slate-50">
         {selected.length === 0
           ? 'None selected'
-          : isDonor ? `${selected.length} ingredients marked as used` : `${selected.length} allergens to avoid`}
+          : isDonor ? `[${selected.length}] ingredients marked as used` : `[${selected.length}] allergens to avoid`}
       </div>
     </div>
   );

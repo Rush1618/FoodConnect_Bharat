@@ -24,9 +24,14 @@ export default function NeedForm({ isSOS = false, onClose }) {
   const [address, setAddress] = useState('');
 
   useEffect(() => {
-    if (user?.allergyProfile?.length) {
-      setAllergiesToAvoid(user.allergyProfile);
-      setProfileLoaded(true);
+    if (user) {
+      if (user.allergyProfile?.length) {
+        setAllergiesToAvoid(user.allergyProfile);
+        setProfileLoaded(true);
+      }
+      if (user.allergyNotes) {
+        setAllergyNotes(user.allergyNotes);
+      }
     }
   }, [user]);
 

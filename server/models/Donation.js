@@ -26,8 +26,8 @@ const donationSchema = new Schema(
       lng: { type: Number, required: true },
       address: { type: String, required: true }
     },
-    preparedAt: { type: Date },
-    estimatedFreshFor: { type: Number, min: 1, max: 72 },
+    preparedAt: { type: Date, required: true },
+    estimatedFreshFor: { type: Number, required: true, min: 1, max: 72 },
     expiryTime: { type: Date },
     urgencyScore: { 
       type: String, 
@@ -39,13 +39,23 @@ const donationSchema = new Schema(
       default: 'available'
     },
     volunteerId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
-    whatsappShareText: { type: String }
+    whatsappShareText: { type: String },
+    verifiedByVolunteer: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    foodImages: { type: [String], default: [] },
+    // Bhandara Details
+    bhandaraName: { type: String, default: '' },
+    bhandaraStartTime: { type: Date },
+    bhandaraEndTime: { type: Date },
+    expectedCrowd: { type: Number, default: 0 }
   },
   { timestamps: true }
 );
 
 
 donationSchema.pre('save', function(next) {
+  // Derive containsOnionGarlic automatically
+  this.containsOnionGarlic = this.ingredientsUsed.includes('onion') || this.ingredientsUsed.includes('garlic');
+
   // If expiryTime is missing, infer it roughly
   if (!this.expiryTime && this.preparedAt && this.estimatedFreshFor) {
     this.expiryTime = new Date(this.preparedAt.getTime() + this.estimatedFreshFor * 3600000);

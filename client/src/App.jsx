@@ -1,16 +1,27 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Link, NavLink, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import Dashboard from './components/Dashboard';
+import HowItWorks from './pages/HowItWorks';
+import Sustainability from './pages/Sustainability';
+import CSR from './pages/CSR';
+import UserCSR from './pages/UserCSR';
+import Achievements from './pages/Achievements';
+import WhyUs from './pages/WhyUs';
+import VerificationHub from './pages/VerificationHub';
+import Footer from './components/Footer';
 import Register from './components/Register';
 import Profile from './pages/Profile';
 import DonationForm from './components/DonationForm';
-import NeedForm from './components/NeedForm';
-import Leaderboard from './components/Leaderboard';
-import { MapPin, User, Utensils, LogOut, Menu, X, Plus, HeartHandshake, Trophy, Zap, ClipboardList } from 'lucide-react';
-import { motion } from 'framer-motion';
 import RequestPage from './components/RequestPage';
 import FulfillerRequestsPage from './components/FulfillerRequestsPage';
+import Dashboard from './components/Dashboard';
+
+import { 
+  MapPin, User, Utensils, LogOut, Menu, X, 
+  Plus, HeartHandshake, Trophy, Zap, ClipboardList, 
+  Info, Leaf, Building2, Star, HelpCircle
+} from 'lucide-react';
 
 // ── Protected route wrapper ────────────────────────────
 function ProtectedRoute({ children, roles }) {
@@ -27,18 +38,22 @@ function Navbar() {
   const [open, setOpen] = useState(false);
 
   const NAV = user ? [
-    { to: '/dashboard',   icon: MapPin,         label: 'Live Map' },
-    ...(user.role === 'donor' || user.role === 'ngo' || user.role === 'volunteer'
-      ? [{ to: '/donate', icon: Plus, label: 'Donate' }]
-      : []),
-    ...(user.role === 'needer'
-      ? [{ to: '/request', icon: HeartHandshake, label: 'Need Food' }]
-      : []),
-    ...(user.role === 'donor' || user.role === 'ngo' || user.role === 'volunteer'
-      ? [{ to: '/my-requests', icon: ClipboardList, label: 'Requests' }]
-      : []),
-    { to: '/leaderboard', icon: Trophy,          label: 'Leaders' },
-  ] : [];
+    { to: '/dashboard',     icon: MapPin,         label: 'Live Map' },
+    { to: '/achievements',  icon: Trophy,         label: 'Achievements' },
+    { to: '/csr-hub',       icon: Building2,      label: 'CSR Hub' },
+    // Restoring requests management for donors/vols/ngos
+    ...(user.role === 'donor' ? [{ to: '/my-requests', icon: Utensils, label: 'My Food' }] : []),
+    ...(user.role === 'needer' ? [{ to: '/my-requests', icon: Utensils, label: 'My Requests' }] : []),
+    ...(user.role === 'ngo' || user.role === 'volunteer' ? [
+      { to: '/fulfill-requests', icon: Truck, label: 'Deliveries' },
+      { to: '/verification-hub', icon: ShieldCheck, label: 'Verifications' }
+    ] : []),
+  ] : [
+    { to: '/why-us',        icon: HelpCircle,     label: 'Why Us?' },
+    { to: '/how-it-works', icon: Info,            label: 'Process' },
+    { to: '/sustainability', icon: Leaf,          label: 'ESG Impact' },
+    { to: '/csr',           icon: Building2,      label: 'For Business' },
+  ];
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-[9999] h-16"
@@ -290,9 +305,11 @@ function App() {
           <main className="pt-16">
             <Routes>
               {/* Public */}
-              <Route path="/"         element={<Landing />} />
-              <Route path="/login"    element={<Register defaultTab="login" />} />
-              <Route path="/register" element={<Register defaultTab="register" />} />
+              <Route path="/"                 element={<Landing />} />
+              <Route path="/how-it-works"    element={<HowItWorks />} />
+              <Route path="/sustainability"   element={<Sustainability />} />
+              <Route path="/login"            element={<Register defaultTab="login" />} />
+              <Route path="/register"         element={<Register defaultTab="register" />} />
 
               {/* Protected */}
               <Route path="/dashboard" element={
@@ -313,11 +330,21 @@ function App() {
               <Route path="/leaderboard" element={
                 <ProtectedRoute><LeaderboardPage /></ProtectedRoute>
               } />
+              <Route path="/csr" element={<CSR />} />
+              <Route path="/csr-hub" element={
+                <ProtectedRoute roles={['donor','ngo','volunteer']}><UserCSR /></ProtectedRoute>
+              } />
+              <Route path="/verification-hub" element={
+                <ProtectedRoute roles={['volunteer','ngo']}><VerificationHub /></ProtectedRoute>
+              } />
+              <Route path="/achievements" element={<Achievements />} />
+              <Route path="/why-us" element={<WhyUs />} />
 
               {/* Fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
+          <Footer />
         </div>
       </BrowserRouter>
     </AuthProvider>

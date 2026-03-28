@@ -42,6 +42,16 @@ export default function DonationForm({ setDonations }) {
     return d.toISOString().slice(0, 16);
   });
 
+  // Bhandara State
+  const [bhandaraName, setBhandaraName] = useState('');
+  const [bhandaraStartTime, setBhandaraStartTime] = useState(() => new Date().toISOString().slice(0, 16));
+  const [bhandaraEndTime, setBhandaraEndTime] = useState(() => {
+    const d = new Date();
+    d.setHours(d.getHours() + 4);
+    return d.toISOString().slice(0, 16);
+  });
+  const [expectedCrowd, setExpectedCrowd] = useState(100);
+
   const [ingredientsUsed, setIngredientsUsed] = useState([]);
   const [address, setAddress] = useState('');
   const [jainWarning, setJainWarning] = useState(false);
@@ -153,7 +163,12 @@ export default function DonationForm({ setDonations }) {
       assignedToNgo: method === 'ngo' ? selectedNgo : null,
       preparedAt: foodCategory !== 'packed' ? preparedAt : null,
       estimatedFreshFor: foodCategory !== 'packed' ? Number(estimatedFreshFor) : null,
-      expiryTime: foodCategory === 'packed' ? packedExpiryDate : null
+      expiryTime: foodCategory === 'packed' ? packedExpiryDate : null,
+      // Bhandara fields
+      bhandaraName,
+      bhandaraStartTime: foodType === 'bhandara' ? bhandaraStartTime : null,
+      bhandaraEndTime: foodType === 'bhandara' ? bhandaraEndTime : null,
+      expectedCrowd: foodType === 'bhandara' ? Number(expectedCrowd) : 0
     };
 
     try {
@@ -187,31 +202,63 @@ export default function DonationForm({ setDonations }) {
     setLoading(false);
   };
 
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (successMsg.whatsappShareText) {
+      navigator.clipboard.writeText(successMsg.whatsappShareText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   if (successMsg) {
     return (
-      <div className="glass-card p-8 text-center space-y-4">
-        <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto">
-          <CheckCircle size={32} className="text-green-400" />
+      <div className="glass-card p-10 text-center space-y-6 animate-in fade-in zoom-in duration-500">
+        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center mx-auto shadow-xl shadow-emerald-500/20 rotate-3">
+          <CheckCircle size={40} className="text-white" />
         </div>
-        <h3 className="text-2xl font-extrabold text-slate-900" style={{ fontFamily: 'Plus Jakarta Sans' }}>Donation Created! 🎉</h3>
-        <p className="text-slate-500 text-sm">You're a hero. Thank you for reducing food waste.</p>
-        <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 text-left space-y-2 text-sm shadow-sm">
-          <p className="text-slate-700"><span className="text-slate-500">Urgency:</span> <span className="font-bold text-orange-600 uppercase">{successMsg.urgencyScore}</span></p>
-          <p className="text-slate-700"><span className="text-slate-500">Contains:</span> {successMsg.ingredientsUsed?.length ? successMsg.ingredientsUsed.join(', ') : 'None marked'}</p>
+        <div>
+          <h3 className="text-3xl font-black text-slate-900" style={{ fontFamily: 'Plus Jakarta Sans' }}>Donation Live! 🎉</h3>
+          <p className="text-slate-500 font-medium mt-2">You're a hero. Your surplus is now helping your community.</p>
         </div>
-        <div className="flex gap-3">
+        
+        <div className="bg-white border border-slate-100 rounded-3xl p-5 text-left space-y-3 shadow-inner">
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Shareable Details</span>
+            <span className={clsx(
+              'px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tighter border',
+              successMsg.urgencyScore === 'critical' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+            )}>
+              {successMsg.urgencyScore}
+            </span>
+          </div>
+          <p className="text-slate-600 text-xs leading-relaxed font-medium bg-slate-50 p-3 rounded-xl border border-slate-100 whitespace-pre-wrap">
+            {successMsg.whatsappShareText || "Donation created successfully."}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {successMsg.whatsappShareText && (
             <a href={`https://wa.me/?text=${encodeURIComponent(successMsg.whatsappShareText)}`}
               target="_blank" rel="noreferrer"
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm font-bold hover:bg-green-100 transition shadow-sm">
-              <Share2 size={14} /> Share on WhatsApp
+              className="flex items-center justify-center gap-2.5 py-4 rounded-2xl bg-[#25D366] text-white text-sm font-black hover:bg-[#128C7E] transition-all shadow-lg shadow-green-500/20 active:scale-95">
+              <Share2 size={16} /> WhatsApp Share
             </a>
           )}
-          <button onClick={() => setSuccessMsg('')}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-sm font-bold hover:bg-slate-50 transition shadow-sm">
-            <Plus size={14} /> Add Another
+          <button onClick={handleCopy}
+            className={clsx(
+              "flex items-center justify-center gap-2.5 py-4 rounded-2xl text-sm font-black transition-all shadow-md active:scale-95 border-2",
+              copied ? "bg-emerald-50 border-emerald-500 text-emerald-600" : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+            )}>
+            {copied ? <>✓ Copied!</> : <><Plus size={16} /> Copy Details</>}
           </button>
         </div>
+
+        <button onClick={() => setSuccessMsg('')}
+          className="text-orange-500 text-sm font-bold hover:underline">
+          Donate More Food
+        </button>
       </div>
     );
   }
@@ -291,6 +338,40 @@ export default function DonationForm({ setDonations }) {
           ))}
         </div>
       </div>
+
+      {/* Bhandara Specific Controls */}
+      {foodType === 'bhandara' && (
+        <div className="space-y-4 p-5 bg-purple-50 rounded-3xl border border-purple-100 animate-in zoom-in duration-300">
+          <h3 className="text-sm font-black text-purple-900 uppercase tracking-widest flex items-center gap-2">
+            ✨ Bhandara Broadcast Mode
+          </h3>
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <label className="text-[10px] font-black text-purple-400 uppercase tracking-tighter mb-1 block">Event/Bhandara Name</label>
+              <input type="text" value={bhandaraName} onChange={e => setBhandaraName(e.target.value)} 
+                placeholder="e.g. Mahakal Prasad Distribution"
+                className="w-full bg-white border-purple-200 rounded-xl px-4 py-2.5 text-sm font-bold text-purple-900 placeholder:text-purple-200" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] font-black text-purple-400 uppercase tracking-tighter mb-1 block">Start Time</label>
+                <input type="datetime-local" value={bhandaraStartTime} onChange={e => setBhandaraStartTime(e.target.value)}
+                  className="w-full bg-white border-purple-200 rounded-xl px-3 py-2 text-xs font-bold text-purple-900" />
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-purple-400 uppercase tracking-tighter mb-1 block">End Time</label>
+                <input type="datetime-local" value={bhandaraEndTime} onChange={e => setBhandaraEndTime(e.target.value)}
+                  className="w-full bg-white border-purple-200 rounded-xl px-3 py-2 text-xs font-bold text-purple-900" />
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-purple-400 uppercase tracking-tighter mb-1 block">Expected People: <span className="text-purple-600 font-black">{expectedCrowd}</span></label>
+              <input type="range" min="50" max="2000" step="50" value={expectedCrowd} onChange={e => setExpectedCrowd(e.target.value)}
+                className="w-full accent-purple-500" />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Food Category */}
       <div>
