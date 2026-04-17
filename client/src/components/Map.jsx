@@ -107,7 +107,14 @@ const URGENCY_STYLES = {
   expired: 'bg-slate-400 text-white border-slate-500 opacity-50',
 };
 
-export default function Map({ donations = [], requests = [], center = [19.213768, 72.865273], mode = 'all' }) {
+export default function Map({ 
+  donations = [], 
+  requests = [], 
+  hungerSpots = [], 
+  setHungerSpots,
+  center = [19.213768, 72.865273], 
+  mode = 'all' 
+}) {
   const { user } = useAuth();
   const userRole = user?.role || 'needer';
   const navigate = useNavigate();
@@ -118,15 +125,15 @@ export default function Map({ donations = [], requests = [], center = [19.213768
   const [locating, setLocating] = useState(false);
   const [locError, setLocError] = useState('');
   const [claiming, setClaiming] = useState(null);
-  const [showHeatmap, setShowHeatmap] = useState(userRole === 'ngo' || userRole === 'donor');
+  const [showHeatmap, setShowHeatmap] = useState(true);
   const [deliveryBikes, setDeliveryBikes] = useState({});
   
-  // Custom Hunger Spots State
-  const [hungerSpots, setHungerSpots] = useState([]);
+  // Custom Hunger Spots State via child logic
   const [isMarking, setIsMarking] = useState(false);
 
-  // Sync with LocalStorage Bridge
+  // Sync with LocalStorage Bridge (if parent doesn't provide it)
   useEffect(() => {
+    if (!setHungerSpots) return;
     setHungerSpots(localStorageBridge.getHungerSpots());
   }, []);
 
@@ -202,18 +209,17 @@ export default function Map({ donations = [], requests = [], center = [19.213768
           })} />
         )}
 
-        {/* Layer 1: CONFIRMED HEATMAP (Visible to Donor & NGO) */}
-        {showHeatmap && (userRole === 'ngo' || userRole === 'donor') && hungerSpots
-          .filter(s => s.status === 'confirmed')
+        {/* Layer 1: REGIONAL HUNGER HEATMAP */}
+        {showHeatmap && hungerSpots
           .map(s => (
             <Circle 
               key={`heat-${s.id}`}
               center={[s.lat, s.lng]} 
-              radius={350} 
+              radius={s.status === 'confirmed' ? 400 : 300} 
               pathOptions={{ 
-                color: '#ef4444', 
-                fillColor: '#ef4444', 
-                fillOpacity: 0.22, 
+                color: s.status === 'confirmed' ? '#ef4444' : '#f97316', 
+                fillColor: s.status === 'confirmed' ? '#ef4444' : '#f97316', 
+                fillOpacity: s.status === 'confirmed' ? 0.3 : 0.15, 
                 weight: 0,
                 className: 'animate-pulse' 
               }} 
@@ -313,17 +319,15 @@ export default function Map({ donations = [], requests = [], center = [19.213768
       </div>
 
       <div className="absolute bottom-6 left-4 z-[999] flex flex-col gap-2">
-        {(userRole === 'ngo' || userRole === 'donor') && (
-           <button
-             onClick={() => setShowHeatmap(!showHeatmap)}
-             className={clsx(
-               "flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs shadow-2xl transition-all border",
-               showHeatmap ? "bg-red-600 text-white border-red-400" : "bg-white text-red-600 border-red-200"
-             )}
-           >
-             <Flame size={15} /> {showHeatmap ? 'Heatmap Active' : 'Show Hunger Heatmap'}
-           </button>
-        )}
+        <button
+          onClick={() => setShowHeatmap(!showHeatmap)}
+          className={clsx(
+            "flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs shadow-2xl transition-all border",
+            showHeatmap ? "bg-red-600 text-white border-red-400" : "bg-white text-red-600 border-red-200"
+          )}
+        >
+          <Flame size={15} /> {showHeatmap ? 'Heatmap Active' : 'Show Hunger Heatmap'}
+        </button>
         <button onClick={locateMe} className="bg-blue-600 text-white p-3 rounded-2xl shadow-xl hover:bg-blue-700 transition-all">
           <Navigation size={20} />
         </button>

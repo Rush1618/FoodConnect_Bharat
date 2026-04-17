@@ -23,7 +23,8 @@ export default function Leaderboard() {
     fetch('http://localhost:5000/api/users/leaderboard')
       .then(res => res.json())
       .then(data => {
-        setHeroes(Array.isArray(data) ? data : []);
+        const filtered = Array.isArray(data) ? data.filter(u => u.role !== 'needer') : [];
+        setHeroes(filtered);
         setLoading(false);
       })
       .catch(err => {

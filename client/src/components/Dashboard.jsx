@@ -108,16 +108,19 @@ export default function Dashboard() {
     p.append('radius', 50);
     try {
       const res = await fetch(`${url}?${p}`);
-      const data = await res.json();
-      setDonations(Array.isArray(data) ? data : []);
-    } catch { setDonations([]); }
+      const apiData = await res.json();
+      const localData = localStorageBridge.getInjectedRecords('donations');
+      setDonations([...(Array.isArray(apiData) ? apiData : []), ...localData]);
+    } catch {
+      setDonations(localStorageBridge.getInjectedRecords('donations'));
+    }
   };
-
   const fetchRequests = async () => {
     try {
       const res = await fetch('http://localhost:5000/api/requests?nearby=true');
-      const data = await res.json();
-      const reqList = Array.isArray(data) ? data : [];
+      const apiData = await res.json();
+      const localData = localStorageBridge.getInjectedRecords('requests');
+      const reqList = [...(Array.isArray(apiData) ? apiData : []), ...localData];
       setRequests(reqList);
 
       // Smart Donor Nudge: Count pending requests within 5km
@@ -187,37 +190,24 @@ export default function Dashboard() {
   const generateNeederDemos = async () => {
     const [baseLat, baseLng] = livePos;
     const jitter = () => (Math.random() - 0.5) * 0.005;
-    const tok = localStorage.getItem('token');
-    if (!tok) return alert('Please login first.');
-
+    
     setLoading(true);
-    try {
-      const demoDonations = [
-        { type: 'veg',      quantity: '50 plates',  address: 'Thakur Village, Kandivali',     latO: 0.002,  lngO: 0.002  },
-        { type: 'jain',     quantity: '20 boxes',   address: 'Jain Derasar, 90 Feet Road',    latO: -0.001, lngO: 0.003, isBhandara: true },
-        { type: 'nonveg',   quantity: '10 packets', address: 'Restaurant, Borivali East',      latO: 0.004,  lngO: -0.002 },
-        { type: 'bhandara', quantity: '100 plates', address: 'Bhandara near Tempel',           latO: -0.003, lngO: -0.001, isBhandara: true },
-      ];
-      
-      await Promise.all(demoDonations.map(async item => {
-        const sType = item.type === 'bhandara' ? 'veg' : item.type;
-        await fetch('http://localhost:5000/api/donations', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tok}` },
-          body: JSON.stringify({
-            foodType: sType,
-            foodCategory: 'ready-to-eat',
-            quantity: item.quantity,
-            description: `Fresh demo ${item.type} food.`,
-            location: { lat: baseLat + item.latO + jitter(), lng: baseLng + item.lngO + jitter(), address: item.address },
-            preparedAt: new Date(),
-            estimatedFreshFor: 12,
-            isBhandara: item.isBhandara || false,
-          })
-        });
-      }));
-      alert('🍛 Available food demos added! Check the map.');
-    } catch (e) { console.error(e); }
+    const demoDonations = [
+      { type: 'veg',      quantity: '50 plates',  address: 'Thakur Village, Kandivali',     latO: 0.002,  lngO: 0.002  },
+      { type: 'jain',     quantity: '20 boxes',   address: 'Jain Derasar, 90 Feet Road',    latO: -0.001, lngO: 0.003, isBhandara: true },
+    ];
+    
+    demoDonations.forEach(item => {
+      localStorageBridge.injectDemoRecord('donations', {
+        foodType: item.type,
+        quantity: item.quantity,
+        description: `Local Demo ${item.type} food.`,
+        location: { lat: baseLat + item.latO + jitter(), lng: baseLng + item.lngO + jitter(), address: item.address },
+        status: 'available',
+        preparedAt: new Date().toISOString()
+      });
+    });
+    alert('🍛 Local food demos added to Map!');
     await refresh();
     setLoading(false);
   };
@@ -225,53 +215,29 @@ export default function Dashboard() {
   const generateNgoDemos = async () => {
     const [baseLat, baseLng] = livePos;
     const jitter = () => (Math.random() - 0.5) * 0.005;
-    const tok = localStorage.getItem('token');
-    if (!tok) return alert('Please login first.');
 
     setLoading(true);
-    try {
-      // NGO adds both Food and Requests
-      const demoDonations = [
-        { type: 'veg', quantity: '40 meals', address: 'NGO Hub A', latO: 0.001, lngO: -0.003 },
-        { type: 'veg', quantity: '25 meals', address: 'NGO Hub B', latO: -0.002, lngO: 0.004 },
-      ];
-      const demoRequests = [
-        { dietaryPref: 'any', numberOfPeople: 15, allergyNotes: 'Slum area requirement.', latO: 0.004, lngO: 0.002 },
-        { dietaryPref: 'veg', numberOfPeople: 30, isSOS: true, allergyNotes: 'Flood relief need.', latO: -0.005, lngO: -0.001 },
-      ];
+    const demoDonations = [
+      { type: 'veg', quantity: '40 meals', address: 'NGO Hub A', latO: 0.001, lngO: -0.003 },
+    ];
+    const demoRequests = [
+      { dietaryPref: 'any', numberOfPeople: 15, allergyNotes: 'Slum area requirement.', latO: 0.004, lngO: 0.002 },
+    ];
 
-      await Promise.all([
-        ...demoDonations.map(async item => {
-          await fetch('http://localhost:5000/api/donations', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tok}` },
-            body: JSON.stringify({
-              foodType: item.type,
-              foodCategory: 'ready-to-eat',
-              quantity: item.quantity,
-              description: `NGO Surplus Demo - ${item.address}`,
-              location: { lat: baseLat + item.latO + jitter(), lng: baseLng + item.lngO + jitter(), address: item.address },
-              preparedAt: new Date(),
-              estimatedFreshFor: 24,
-            })
-          });
-        }),
-        ...demoRequests.map(async item => {
-          await fetch('http://localhost:5000/api/requests', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tok}` },
-            body: JSON.stringify({
-              dietaryPref: item.dietaryPref,
-              numberOfPeople: item.numberOfPeople,
-              allergyNotes: item.allergyNotes,
-              isSOS: item.isSOS || false,
-              location: { lat: baseLat + item.latO + jitter(), lng: baseLng + item.lngO + jitter(), address: 'Nearby Slum Area' }
-            })
-          });
-        })
-      ]);
-      alert('🏢 NGO Demos: Food & Requests added!');
-    } catch (e) { console.error(e); }
+    demoDonations.forEach(i => {
+      localStorageBridge.injectDemoRecord('donations', {
+        foodType: i.type, quantity: i.quantity, status: 'available',
+        location: { lat: baseLat + i.latO + jitter(), lng: baseLng + i.lngO + jitter(), address: i.address }
+      });
+    });
+    demoRequests.forEach(r => {
+      localStorageBridge.injectDemoRecord('requests', {
+        dietaryPref: r.dietaryPref, numberOfPeople: r.numberOfPeople, status: 'pending',
+        location: { lat: baseLat + r.latO + jitter(), lng: baseLng + r.lngO + jitter() }
+      });
+    });
+
+    alert('🏢 Local NGO Demos: Food & Requests added!');
     await refresh();
     setLoading(false);
   };
@@ -830,7 +796,7 @@ export default function Dashboard() {
           {/* Map - shows BOTH food and requests for fulfillers */}
           <div className="relative">
             {(isVolunteer || isNgo) && (
-              <div className="absolute top-4 left-4 z-[999]">
+              <div className="absolute top-4 left-16 z-[999]">
                 <button onClick={() => navigate('/verification-hub')}
                   className="flex items-center gap-3 p-4 rounded-3xl bg-blue-600 text-white shadow-xl shadow-blue-500/10 hover:bg-blue-500 transition-all border border-blue-400/20 group">
                   <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
@@ -847,13 +813,14 @@ export default function Dashboard() {
               donations={filterType === 'requests' ? [] : filteredDonations}
               requests={filterType === 'donations' ? [] : pendingRequests}
               hungerSpots={hungerSpots}
+              setHungerSpots={setHungerSpots}
               showHeatmap={showHeatmap}
               mode="all"
             />
             <div className="absolute bottom-6 right-4 z-[999]">
               <SOSButton />
             </div>
-            <div className="absolute top-4 right-4 z-[500] hidden lg:block w-72 glass-card overflow-hidden shadow-2xl">
+            <div className="absolute top-4 right-4 z-[500] hidden lg:block w-72 glass-card overflow-hidden shadow-2xl max-h-[70vh] custom-scrollbar">
               <Leaderboard />
             </div>
           </div>

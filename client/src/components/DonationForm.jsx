@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import AllergenPicker from './AllergenPicker';
 import { useAuth } from '../context/AuthContext';
-import { MapPin, Clock, Utensils, CheckCircle, Share2, Plus, Navigation } from 'lucide-react';
+import { MapPin, Clock, Utensils, CheckCircle, Share2, Plus, Navigation, Zap } from 'lucide-react';
+import clsx from 'clsx';
 
 const FOOD_TYPES = [
   { value: 'veg', label: '🌿 Vegetarian', color: 'border-green-500/40 bg-green-500/10 text-green-400' },
@@ -434,9 +435,25 @@ export default function DonationForm({ setDonations }) {
             </div>
 
             <div>
-              <label className="text-xs text-slate-500 mb-2 block">Stays fresh for — <span className="text-orange-600 font-bold">{estimatedFreshFor} hours</span></label>
+              <label className="text-xs text-slate-500 mb-2 block">Stays fresh for — <span className={clsx("font-bold", Number(estimatedFreshFor) <= 2 ? "text-red-600" : "text-orange-600")}>{estimatedFreshFor} hours</span></label>
               <input type="range" min="1" max="72" value={estimatedFreshFor}
                 onChange={e => setEstimatedFreshFor(e.target.value)} className="w-full accent-orange-500" />
+              
+              {Number(estimatedFreshFor) <= 2 && (
+                <div className="mt-3 p-4 rounded-2xl bg-red-50 border border-red-100 flex items-start gap-3 animate-in slide-in-from-top-2 duration-300">
+                  <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
+                    <Zap size={20} className="text-red-600 animate-bounce" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-red-800 uppercase tracking-widest">Highly Perishable!</p>
+                    <p className="text-[11px] font-bold text-red-600 mt-0.5 leading-relaxed">
+                      This food needs individual pickup or NGO fast-tracking. Consider choosing 
+                      <button type="button" onClick={() => setMethod('ngo')} className="underline font-black mx-1 hover:text-red-800">Direct NGO Pickup</button> above.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <div className="flex justify-between text-[10px] text-slate-400 mt-1">
                 <span>Cooked rice = 3–4 hrs</span>
                 <span>Baked = 24–72 hrs</span>

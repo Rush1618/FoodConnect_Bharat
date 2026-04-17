@@ -20,7 +20,7 @@ export default function CSR() {
   return (
     <div className="min-h-screen bg-[#FDFCFB]">
       {/* Hero Section */}
-      <div className="relative h-[600px] flex items-center justify-center overflow-hidden bg-slate-900">
+      <div className="relative h-[750px] flex items-center justify-center overflow-hidden bg-slate-900">
         <div className="absolute inset-0 z-0">
           <img 
             src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop" 
@@ -43,9 +43,12 @@ export default function CSR() {
             Transforming Waste into <br />
             <span className="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent italic">Societal Wealth</span>
           </h1>
-          <p className="text-slate-300 text-lg md:text-xl font-medium mb-10 max-w-2xl mx-auto leading-relaxed">
-            Empowering organizations to fulfill their ESG mandates through real-time, transparent food redistribution and waste reduction.
+          <p className="text-slate-300 text-lg md:text-xl font-medium mb-4 max-w-2xl mx-auto leading-relaxed">
+            Empowering organizations to fulfill their ESG mandates through real-time, transparent food redistribution.
           </p>
+          <div className="flex items-center justify-center gap-3 mb-10 text-emerald-400 font-black uppercase text-xs tracking-widest bg-emerald-500/10 py-3 px-6 rounded-2xl border border-emerald-500/20 w-fit mx-auto">
+             <ShieldCheck size={16} /> Verified by CSR Standards & Audit-Ready Certificates
+          </div>
           <div className="flex flex-wrap justify-center gap-4">
             <button className="px-8 py-4 rounded-2xl bg-blue-600 text-white font-black text-sm uppercase tracking-widest shadow-2xl shadow-blue-500/20 hover:bg-blue-500 transition-all flex items-center gap-2 group">
               Partner with Us <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
@@ -58,7 +61,7 @@ export default function CSR() {
       </div>
 
       {/* Core ESG Pillars */}
-      <div className="max-w-7xl mx-auto px-6 -mt-24 relative z-20 pb-20">
+      <div className="max-w-7xl mx-auto px-6 -mt-16 relative z-30 pb-20">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <PillarCard 
             icon={<Leaf />} 
@@ -97,9 +100,10 @@ export default function CSR() {
             </p>
             
             <div className="space-y-6">
-              <FeatureItem icon={<TrendingUp />} text="Monthly ESG Compliance Reports" />
-              <FeatureItem icon={<Globe />} text="Regional Impact Heatmaps" />
-              <FeatureItem icon={<Award />} text="Tax Exemption (80G) Certificate Automation" />
+              <FeatureItem icon={<ShieldCheck />} text="CSR Verified Verification Badging" />
+              <FeatureItem icon={<TrendingUp />} text="Download Official Donation Certificates" />
+              <FeatureItem icon={<Award />} text="Include Certificates in ESG & Annual Reports" />
+              <FeatureItem icon={<Globe />} text="Transparency & Audit-Ready Proof Points" />
             </div>
           </div>
           

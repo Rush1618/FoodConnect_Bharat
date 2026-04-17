@@ -46,14 +46,15 @@ export const localStorageBridge = {
   },
 
   // --- Demo Injections (Local only markers) ---
-  getDemoInjections: (type) => {
+  getInjectedRecords: (type) => {
     const data = localStorage.getItem(KEYS.DEMO_INJECTIONS);
     const all = data ? JSON.parse(data) : { donations: [], requests: [] };
-    return type ? all[type] : all;
+    return type ? (all[type] || []) : all;
   },
 
   injectDemoRecord: (type, record) => {
-    const all = localStorageBridge.getDemoInjections();
+    const all = localStorageBridge.getInjectedRecords();
+    all[type] = all[type] || [];
     all[type].push({
       _id: `demo_${Date.now()}`,
       isDemo: true,

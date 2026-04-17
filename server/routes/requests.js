@@ -141,4 +141,19 @@ router.post('/:id/volunteer', requireAuth, async (req, res) => {
   }
 });
 
+// GET ASSIGNED MISSIONS (for Volunteers/NGOs)
+router.get('/assigned', requireAuth, async (req, res) => {
+  try {
+    const requests = await Request.find({
+      $or: [
+        { volunteerId: req.user.id }
+      ]
+    }).populate('neederId linkedDonation').sort({ updatedAt: -1 });
+
+    res.json(requests);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch assigned requests' });
+  }
+});
+
 export default router;

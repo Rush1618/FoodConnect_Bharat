@@ -12,6 +12,7 @@ import VerificationHub from './pages/VerificationHub';
 import Footer from './components/Footer';
 import Register from './components/Register';
 import Profile from './pages/Profile';
+import NGOAnalytics from './pages/NGOAnalytics';
 import DonationForm from './components/DonationForm';
 import RequestPage from './components/RequestPage';
 import FulfillerRequestsPage from './components/FulfillerRequestsPage';
@@ -20,7 +21,7 @@ import Dashboard from './components/Dashboard';
 import { 
   MapPin, User, Utensils, LogOut, Menu, X, 
   Plus, HeartHandshake, Trophy, Zap, ClipboardList, 
-  Info, Leaf, Building2, Star, HelpCircle, Truck, ShieldCheck
+  Info, Leaf, Building2, Star, HelpCircle, Truck, ShieldCheck, BarChart3
 } from 'lucide-react';
 
 // ── Protected route wrapper ────────────────────────────
@@ -46,7 +47,8 @@ function Navbar() {
     ...(user.role === 'needer' ? [{ to: '/my-requests', icon: Utensils, label: 'My Requests' }] : []),
     ...(user.role === 'ngo' || user.role === 'volunteer' ? [
       { to: '/fulfill-requests', icon: Truck, label: 'Deliveries' },
-      { to: '/verification-hub', icon: ShieldCheck, label: 'Verifications' }
+      { to: '/verification-hub', icon: ShieldCheck, label: 'Verifications' },
+      ...(user.role === 'ngo' ? [{ to: '/ngo-analytics', icon: BarChart3, label: 'Analytics' }] : [])
     ] : []),
   ] : [
     { to: '/why-us',        icon: HelpCircle,     label: 'Why Us?' },
@@ -56,9 +58,8 @@ function Navbar() {
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-[9999] h-16"
-      style={{ background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-      <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
+    <nav className="fixed top-0 left-0 right-0 z-[9999] h-16 border-b border-slate-200/50 bg-white/70 backdrop-blur-3xl">
+      <div className="max-w-[1440px] mx-auto px-6 h-full flex items-center justify-between">
         {/* Logo */}
         <Link to={user ? '/dashboard' : '/'} className="flex items-center gap-2.5">
           <div className="btn-primary w-9 h-9 rounded-xl flex items-center justify-center shadow-lg">
@@ -73,7 +74,7 @@ function Navbar() {
         </Link>
 
         {/* Desktop nav */}
-        <div className="hidden md:flex items-center gap-1">
+        <div className="hidden md:flex items-center gap-4 flex-1 justify-center">
           {NAV.map(({ to, icon: Icon, label }) => (
             <NavLink key={to} to={to}
               className={({ isActive }) =>
@@ -339,6 +340,9 @@ function App() {
               } />
               <Route path="/verification-hub" element={
                 <ProtectedRoute roles={['volunteer','ngo']}><VerificationHub /></ProtectedRoute>
+              } />
+              <Route path="/ngo-analytics" element={
+                <ProtectedRoute roles={['ngo']}><NGOAnalytics /></ProtectedRoute>
               } />
               <Route path="/achievements" element={<Achievements />} />
               <Route path="/why-us" element={<WhyUs />} />

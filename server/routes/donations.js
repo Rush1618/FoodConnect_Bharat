@@ -252,4 +252,19 @@ router.patch('/:id/assign-volunteer', requireAuth, async (req, res) => {
   }
 });
 
+// GET ASSIGNED DONATIONS (for Volunteers/NGOs)
+router.get('/assigned', requireAuth, async (req, res) => {
+  try {
+    const { role, id } = req.user;
+    const filter = role === 'ngo' 
+      ? { assignedToNgo: id, status: { $ne: 'completed' } }
+      : { volunteerId: id, status: { $ne: 'completed' } };
+      
+    const donations = await Donation.find(filter).populate('donorId').sort({ updatedAt: -1 });
+    res.json(donations);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch assigned donations' });
+  }
+});
+
 export default router;

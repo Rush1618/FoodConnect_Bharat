@@ -71,6 +71,7 @@ export default function FulfillerRequestsPage() {
   const cfg = ROLE_CONFIG[role] || ROLE_CONFIG.donor;
 
   const [requests, setRequests]     = useState([]);
+  const [assignedMissions, setAssignedMissions] = useState([]);
   const [loading, setLoading]       = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
   const [filter, setFilter]         = useState('all');
@@ -83,7 +84,10 @@ export default function FulfillerRequestsPage() {
     );
   }, []);
 
-  useEffect(() => { fetchRequests(); }, []);
+  useEffect(() => { 
+    fetchRequests(); 
+    if (['volunteer', 'ngo'].includes(user?.role)) fetchAssigned();
+  }, [user]);
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -93,6 +97,24 @@ export default function FulfillerRequestsPage() {
       setRequests(Array.isArray(data) ? data : []);
     } catch { setRequests([]); }
     setLoading(false);
+  };
+
+  const fetchAssigned = async () => {
+    const tok = localStorage.getItem('token');
+    try {
+      const [rRes, dRes] = await Promise.all([
+        fetch('http://localhost:5000/api/requests/assigned', { headers: { 'Authorization': `Bearer ${tok}` } }),
+        fetch('http://localhost:5000/api/donations/assigned', { headers: { 'Authorization': `Bearer ${tok}` } })
+      ]);
+      const rData = await rRes.json();
+      const dData = await dRes.json();
+      
+      const missions = [
+        ...(Array.isArray(rData) ? rData.map(r => ({ ...r, missionType: 'request' })) : []),
+        ...(Array.isArray(dData) ? dData.map(d => ({ ...d, missionType: 'donation' })) : [])
+      ];
+      setAssignedMissions(missions);
+    } catch { setAssignedMissions([]); }
   };
 
   // ── Role-specific: Donor generates food donations ─────────
@@ -327,7 +349,58 @@ export default function FulfillerRequestsPage() {
           ))}
         </div>
 
+        {/* ── Active Assignments (NEW) ──────────────── */}
+        {assignedMissions.length > 0 && (
+          <div className="mb-10 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                <Zap size={16} fill="currentColor" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-slate-800 tracking-tight">Your Active Missions</h3>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Ongoing fulfillment tasks</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {assignedMissions.map(m => (
+                <div key={m._id} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl relative overflow-hidden group">
+                  <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-125 transition-transform duration-700">
+                    <Truck size={100} className="text-white" />
+                  </div>
+                  <div className="flex justify-between items-start mb-3">
+                    <span className="px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[9px] font-black uppercase tracking-widest">
+                      {m.missionType === 'donation' ? '🍲 Pickup Food' : '🛵 Delivery Mission'}
+                    </span>
+                    <span className="text-white font-black text-xs">#{m._id.slice(-4)}</span>
+                  </div>
+                  <p className="text-sm font-bold text-white mb-2">
+                    {m.missionType === 'donation' ? `${m.quantity} ${m.foodType}` : `Feed ${m.numberOfPeople} people`}
+                  </p>
+                  <p className="text-[10px] text-slate-400 font-medium flex items-start gap-1.5 mb-4">
+                    <MapPin size={11} className="shrink-0 mt-0.5" />
+                    {m.location?.address}
+                  </p>
+                  <button onClick={() => navigate('/verification-hub')}
+                    className="w-full py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-[10px] font-black uppercase tracking-widest border border-white/10 transition-all active:scale-95">
+                    View in Actions Hub →
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ── Requests Grid ──────────────────────────── */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
+            <Filter size={14} />
+          </div>
+          <div>
+            <h3 className="text-lg font-black text-slate-800 tracking-tight">Available Nearby</h3>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Community feed for pickup or delivery</p>
+          </div>
+        </div>
+
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[1,2,3,4].map(i => (
